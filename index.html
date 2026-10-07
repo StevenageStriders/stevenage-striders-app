@@ -298,16 +298,9 @@ function renderNextSession(){
   const same=future.filter(s=>s.date===date);
   const d=new Date(date+'T00:00:00');
   const dateLabel=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
-  const speedSession=same.find(s=>/speed endurance/i.test(s.title));
-const steadySession=same.find(s=>/5 miler/i.test(s.title));
-const nextSessions=[speedSession,steadySession].filter(Boolean);
-
-const items=nextSessions.map(s=>{
-  const sessionName=/speed endurance/i.test(s.title)
-    ? 'Speed Endurance'
-    : 'Steady 5 Miler';
+  const items=same.slice(0,3).map(s=>{
   const map='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((s.location||'')+' Stevenage');
-  return `<div class="next-meta"><div>🕒 ${escapeHtml(s.time||'')} — <b>${sessionName}</b></div><div>📍 <a href="${map}" target="_blank" rel="noopener">${escapeHtml(s.location||'Location')} ↗</a></div>${s.leader?`<div>👤 ${escapeHtml(s.leader)}</div>`:''}</div>`;
+  return `<div class="next-meta"><div>🕒 ${escapeHtml(s.time||'')}</div><div>📍 <a href="${map}" target="_blank" rel="noopener">${escapeHtml(s.location||'Location')} ↗</a></div>${s.leader?`<div>👤 ${escapeHtml(s.leader)}</div>`:''}</div>`;
 }).join('<div style="height:12px"></div>');
   el.innerHTML=`<div class="next-date">${dateLabel}</div>${same.length===1?`<h3>${escapeHtml(same[0].title||same[0].session||'Training session')}</h3>`:`<h3>${same.length} training sessions</h3>`}${items}<a class="next-link" href="#" onclick="showTab('training');return false;">View full training schedule →</a>`;
 }
