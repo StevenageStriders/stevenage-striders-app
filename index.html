@@ -225,8 +225,12 @@ function normaliseDate(v){
 }
 function normaliseTime(v){
   v=(v||'').trim();
-  const m=v.match(/(\d{1,2}):(\d{2})/);
-  return m ? `${String(m[1]).padStart(2,'0')}:${m[2]}` : '';
+  const m=v.match(/(\d{1,2}):(\d{2})\s*(am|pm)?/i);
+  if(!m) return '';
+  let h=parseInt(m[1],10);
+  const mins=m[2];
+  const ampm=m[3] ? m[3].toUpperCase() : '';
+  return `${h}:${mins}${ampm ? ' ' + ampm : ''}`;
 }
 function parseSheet(text){
   const rows=csvRows(text); if(!rows.length) return [];
