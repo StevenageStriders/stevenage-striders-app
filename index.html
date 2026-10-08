@@ -227,10 +227,15 @@ function normaliseTime(v){
   v=(v||'').trim();
   const m=v.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?/i);
   if(!m) return '';
-  const h=String(parseInt(m[1],10));
+
+  let h=parseInt(m[1],10);
   const mins=m[2];
-  const ampm=m[4] ? m[4].toUpperCase() : '';
-  return `${h}:${mins}${ampm ? ' ' + ampm : ''}`;
+  const ampm=(m[4]||'').toLowerCase();
+
+  if(ampm==='pm' && h!==12) h+=12;
+  if(ampm==='am' && h===12) h=0;
+
+  return `${String(h).padStart(2,'0')}:${mins}`;
 }
 function parseSheet(text){
   const rows=csvRows(text); if(!rows.length) return [];
