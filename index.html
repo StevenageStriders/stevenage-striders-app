@@ -266,12 +266,13 @@ async function loadTrainingFromSheet(){
     renderNextSession();
     if(status) status.textContent='Schedule updated · checked '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   }catch(e){
-    sessions=FALLBACK_SESSIONS; usingLiveSheet=false;
-    renderTraining(document.querySelector('.filter.active')?.dataset.filter||'upcoming');
-    renderNextSession();
-    if(status) status.textContent=location.protocol==='file:' ? 'Live schedule will update when the app is hosted' : '⚠️ Couldn’t update right now · showing saved schedule';
-    console.warn('Live training sheet unavailable:',e);
-  }
+  sessions=[]; 
+  usingLiveSheet=false;
+  renderTraining(document.querySelector('.filter.active')?.dataset.filter||'upcoming');
+  renderNextSession();
+  if(status) status.textContent='⚠️ Couldn’t update the training schedule right now';
+  console.warn('Live training sheet unavailable:',e);
+}
 }
 function refreshTrainingNow(){ lastSheetFetch=0; loadTrainingFromSheet(); }
 const today = new Date(); today.setHours(0,0,0,0);
