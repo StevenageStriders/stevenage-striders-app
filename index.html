@@ -346,7 +346,73 @@ function formatNewsDate(v){if(!v)return 'CLUB UPDATE';const d=new Date(v);return
 function openAdmin(){document.getElementById('admin-modal').classList.add('show');document.getElementById('admin-password').value='';document.getElementById('admin-login-status').textContent='';document.getElementById('admin-login-view').style.display='block';document.getElementById('admin-editor-view').style.display='none';}
 function closeAdmin(){document.getElementById('admin-modal').classList.remove('show');}
 function adminLogin(){if(document.getElementById('admin-password').value!==ADMIN_PASSWORD){document.getElementById('admin-login-status').textContent='Incorrect password.';return;}document.getElementById('admin-login-view').style.display='none';document.getElementById('admin-editor-view').style.display='block';document.getElementById('admin-date').value=new Date().toISOString().slice(0,10);document.getElementById('admin-publish-status').textContent='';renderAdminRecent();}
-function renderAdminRecent(){const el=document.getElementById('admin-recent'),items=(window._appNews||[]).slice(0,5);el.innerHTML=items.map(x=>`<div class="admin-news-item"><b>${escapeHtml(x.headline||'Untitled')}</b><small>${escapeHtml(formatNewsDate(x.date))}</small></div>`).join('')||'<p class="hint">No posts yet.</p>';}
+
+function renderAdminRecent(){
+  const el = document.getElementById('admin-recent');
+  const items = (window._appNews || []).slice(0, 5);
+
+  el.innerHTML = items.map((x, i) => `
+    <div class="admin-news-item" style="display:flex;align-items:center;gap:10px;justify-content:space-between">
+      <div>
+        <b>${escapeHtml(x.headline || 'Untitled')}</b>
+        <small>${escapeHtml(formatNewsDate(x.date))}</small>
+      </div>
+      <button
+        type="button"
+        onclick="deleteAnnouncement(${i})"
+        style="background:#fff;color:#d71920;border:1px solid #d71920;border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer;flex-shrink:0"
+      >Delete</button>
+    </div>
+  `).join('') || '<p class="hint">No posts yet.</p>';
+}
+
+function deleteAnnouncement(index){
+  const items = window._appNews || [];
+  const post = items[index];
+
+  if (!post) return;
+
+  if (!confirm(`Delete "${post.headline || 'Untitled'}"? This cannot be undone.`)) {
+    return;
+  }
+
+  const status = document.getElementById('admin-publish-status');
+
+  if (!NEWS_PUBLISH_URL) {
+    status.textContent = 'Publishing is not connected.';
+    return;
+  }
+
+  status.textContent = 'Deleting…';
+
+  fetch(NEWS_PUBLISH_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify({
+      password: ADMIN_PASSWORD,
+      action: 'delete',
+      date: post.date,
+      headline: post.headline,
+      photo: post.photo,
+      message: post.message
+    })
+  })
+  .then(r => r.json())
+  .then(result => {
+    if (!result.ok) {
+      throw new Error(result.error || 'Delete failed.');
+    }
+
+    window._appNews.splice(index, 1);
+    renderAdminRecent();
+    loadAppNews();
+    status.textContent = 'Announcement deleted.';
+  })
+  .catch(error => {
+    status.textContent = error.message || 'Could not delete announcement.';
+  });
+}
+
 function publishAnnouncement(){const payload={date:document.getElementById('admin-date').value,headline:document.getElementById('admin-headline').value.trim(),photo:document.getElementById('admin-photo').value.trim(),message:document.getElementById('admin-message').value.trim()};const status=document.getElementById('admin-publish-status');if(!payload.headline&&!payload.message){status.textContent='Please add a headline or message.';return;}if(!NEWS_PUBLISH_URL){status.textContent='Publishing is not connected yet. The Google Apps Script needs to be deployed and its web-app URL added to the app.';return;}status.textContent='Publishing…';fetch(NEWS_PUBLISH_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({password:ADMIN_PASSWORD,...payload})}).then(r=>r.json()).then(x=>{if(!x.ok)throw new Error(x.error||'Publish failed');status.textContent='Published.';document.getElementById('admin-headline').value='';document.getElementById('admin-photo').value='';document.getElementById('admin-message').value='';loadAppNews();renderAdminRecent();}).catch(e=>{status.textContent=e.message||'Could not publish.';});}
 
 function renderTraining(filter='upcoming') {
