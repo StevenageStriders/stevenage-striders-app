@@ -410,6 +410,51 @@ function deleteAnnouncement(index){
 }
 
 
+function verifyAnnouncement(payload, attemptsLeft = 6) {
+  const url = NEWS_CSV_URL +
+    (NEWS_CSV_URL.includes('?') ? '&' : '?') +
+    '_verify=' + Date.now();
+
+  return fetch(url, {cache: 'no-store'})
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Could not check announcements.');
+      }
+      return response.text();
+    })
+    .then(text => {
+      const rows = csvRows(text);
+
+      if (rows.length < 2) {
+        throw new Error('Announcements are not available yet.');
+      }
+
+      const headers = rows[0].map(x => x.trim().toLowerCase());
+      const column = name => headers.indexOf(name);
+
+      const found = rows.slice(1).some(row =>
+        String(row[column('date')] || '').trim().slice(0, 10) ===
+          String(payload.date || '').trim().slice(0, 10) &&
+        String(row[column('headline')] || '').trim() === payload.headline &&
+        String(row[column('photo')] || '').trim() === payload.photo &&
+        String(row[column('message')] || '').trim() === payload.message
+      );
+
+      if (found) return true;
+      if (attemptsLeft <= 1) return false;
+
+      return new Promise(resolve => setTimeout(resolve, 1500))
+        .then(() => verifyAnnouncement(payload, attemptsLeft - 1));
+    })
+    .catch(() => {
+      if (attemptsLeft <= 1) return false;
+
+      return new Promise(resolve => setTimeout(resolve, 1500))
+        .then(() => verifyAnnouncement(payload, attemptsLeft - 1));
+    });
+}
+
+  
 function publishAnnouncement() {
   const payload = {
     date: document.getElementById('admin-date').value,
@@ -443,17 +488,22 @@ function publishAnnouncement() {
       ...payload
     })
   })
-  .then(() => {
-    status.textContent = 'Publish request sent. Check the announcements to confirm.';
-    document.getElementById('admin-headline').value = '';
-    document.getElementById('admin-photo').value = '';
-    document.getElementById('admin-message').value = '';
-    loadAppNews();
-    renderAdminRecent();
+  .then(() => verifyAnnouncement(payload))
+  .then(found => {
+    if (found) {
+      status.textContent = 'Published.';
+      document.getElementById('admin-headline').value = '';
+      document.getElementById('admin-photo').value = '';
+      document.getElementById('admin-message').value = '';
+      loadAppNews();
+      renderAdminRecent();
+    } else {
+      status.textContent = 'The request was sent, but publishing could not be confirmed. Please check the announcements before trying again.';
+    }
   })
-  .catch(error => {
-    status.textContent = 'Google may have received the request, but the browser could not confirm it. Check the announcements before trying again.';
-  });
+  .catch(() => {
+    status.textContent = 'Could not confirm publishing. Please check the announcements before trying again.';
+   });
 }
 
 function renderTraining(filter='upcoming') {
