@@ -405,7 +405,7 @@ function deleteAnnouncement(index){
     status.textContent = 'Delete request sent. Refresh the announcements to confirm.';
   })
   .catch(error => {
-    status.textContent = error.message || 'Could not send delete request.';
+    status.textContent = 'Google may have received the delete request, but the browser could not confirm it. Refresh the announcements to check.';
   });
 }
 
