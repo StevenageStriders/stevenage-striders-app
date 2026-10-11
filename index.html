@@ -452,7 +452,7 @@ function publishAnnouncement() {
     renderAdminRecent();
   })
   .catch(error => {
-    status.textContent = error.message || 'Could not send publish request.';
+    status.textContent = 'Google may have received the request, but the browser could not confirm it. Check the announcements before trying again.';
   });
 }
 
