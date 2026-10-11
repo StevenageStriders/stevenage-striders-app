@@ -454,6 +454,52 @@ function verifyAnnouncement(payload, attemptsLeft = 6) {
     });
 }
 
+  function verifyAnnouncementDeleted(post, attemptsLeft = 6) {
+  const url = NEWS_CSV_URL +
+    (NEWS_CSV_URL.includes('?') ? '&' : '?') +
+    '_verify=' + Date.now();
+
+  return fetch(url, {cache: 'no-store'})
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Could not check announcements.');
+      }
+      return response.text();
+    })
+    .then(text => {
+      const rows = csvRows(text);
+
+      if (rows.length < 2) {
+        throw new Error('Announcements are not available yet.');
+      }
+
+      const headers = rows[0].map(x => x.trim().toLowerCase());
+      const column = name => headers.indexOf(name);
+
+      const found = rows.slice(1).some(row =>
+        String(row[column('date')] || '').trim().slice(0, 10) ===
+          String(post.date || '').trim().slice(0, 10) &&
+        String(row[column('headline')] || '').trim() ===
+          String(post.headline || '').trim() &&
+        String(row[column('photo')] || '').trim() ===
+          String(post.photo || '').trim() &&
+        String(row[column('message')] || '').trim() ===
+          String(post.message || '').trim()
+      );
+
+      if (!found) return true;
+      if (attemptsLeft <= 1) return false;
+
+      return new Promise(resolve => setTimeout(resolve, 1500))
+        .then(() => verifyAnnouncementDeleted(post, attemptsLeft - 1));
+    })
+    .catch(() => {
+      if (attemptsLeft <= 1) return false;
+
+      return new Promise(resolve => setTimeout(resolve, 1500))
+        .then(() => verifyAnnouncementDeleted(post, attemptsLeft - 1));
+    });
+}
   
 function publishAnnouncement() {
   const payload = {
