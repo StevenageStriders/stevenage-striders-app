@@ -398,14 +398,27 @@ function deleteAnnouncement(index){
       message: post.message
     })
   })
-  .then(() => {
-    window._appNews.splice(index, 1);
-    renderAdminRecent();
-    loadAppNews();
-    status.textContent = 'Delete request sent. Refresh the announcements to confirm.';
+  .then(() => verifyAnnouncementDeleted(post))
+  .then(deleted => {
+    if (deleted) {
+      window._appNews = (window._appNews || []).filter(item =>
+        !(
+          item.date === post.date &&
+          item.headline === post.headline &&
+          item.photo === post.photo &&
+          item.message === post.message
+        )
+      );
+
+      renderAdminRecent();
+      loadAppNews();
+      status.textContent = 'Announcement deleted.';
+    } else {
+      status.textContent = 'The delete request was sent, but deletion could not be confirmed. Please refresh and check.';
+    }
   })
-  .catch(error => {
-    status.textContent = 'Google may have received the delete request, but the browser could not confirm it. Refresh the announcements to check.';
+  .catch(() => {
+    status.textContent = 'Could not confirm deletion. Please refresh and check the announcements.';
   });
 }
 
