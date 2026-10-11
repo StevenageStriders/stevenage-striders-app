@@ -410,7 +410,51 @@ function deleteAnnouncement(index){
 }
 
 
-function publishAnnouncement(){const payload={date:document.getElementById('admin-date').value,headline:document.getElementById('admin-headline').value.trim(),photo:document.getElementById('admin-photo').value.trim(),message:document.getElementById('admin-message').value.trim()};const status=document.getElementById('admin-publish-status');if(!payload.headline&&!payload.message){status.textContent='Please add a headline or message.';return;}if(!NEWS_PUBLISH_URL){status.textContent='Publishing is not connected yet. The Google Apps Script needs to be deployed and its web-app URL added to the app.';return;}status.textContent='Publishing…';fetch(NEWS_PUBLISH_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({password:ADMIN_PASSWORD,...payload})}).then(r=>r.json()).then(x=>{if(!x.ok)throw new Error(x.error||'Publish failed');status.textContent='Published.';document.getElementById('admin-headline').value='';document.getElementById('admin-photo').value='';document.getElementById('admin-message').value='';loadAppNews();renderAdminRecent();}).catch(e=>{status.textContent=e.message||'Could not publish.';});}
+function publishAnnouncement() {
+  const payload = {
+    date: document.getElementById('admin-date').value,
+    headline: document.getElementById('admin-headline').value.trim(),
+    photo: document.getElementById('admin-photo').value.trim(),
+    message: document.getElementById('admin-message').value.trim()
+  };
+
+  const status = document.getElementById('admin-publish-status');
+
+  if (!payload.headline && !payload.message) {
+    status.textContent = 'Please add a headline or message.';
+    return;
+  }
+
+  if (!NEWS_PUBLISH_URL) {
+    status.textContent = 'Publishing is not connected.';
+    return;
+  }
+
+  status.textContent = 'Publishing…';
+
+  fetch(NEWS_PUBLISH_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8'
+    },
+    body: JSON.stringify({
+      password: ADMIN_PASSWORD,
+      ...payload
+    })
+  })
+  .then(() => {
+    status.textContent = 'Publish request sent. Check the announcements to confirm.';
+    document.getElementById('admin-headline').value = '';
+    document.getElementById('admin-photo').value = '';
+    document.getElementById('admin-message').value = '';
+    loadAppNews();
+    renderAdminRecent();
+  })
+  .catch(error => {
+    status.textContent = error.message || 'Could not send publish request.';
+  });
+}
 
 function renderTraining(filter='upcoming') {
   const list=document.getElementById('training-list');
