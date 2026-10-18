@@ -321,49 +321,43 @@ function renderNextSession(){
     weekday:'long',day:'numeric',month:'long'
   });
 
-  const speed=same.filter(s=>/speed endurance/i.test(s.title));
-  const steady=same.filter(s=>/steady 5 miler/i.test(s.title));
+  const speed=same.filter(s=>/speed endurance/i.test(s.title||''));
+  const steady=same.filter(s=>/steady 5 miler/i.test(s.title||''));
   const other=same.filter(s=>
-    !/speed endurance/i.test(s.title) &&
-    !/steady 5 miler/i.test(s.title)
+    !/speed endurance/i.test(s.title||'') &&
+    !/steady 5 miler/i.test(s.title||'')
   );
 
   const speedCard=speed.length ? `
-    <article class="session card clickable-session"
+    <div class="next-meta clickable-session"
       onclick="openSpeedDetails('${date}')">
-      <div class="session-main">
-        <h3>Speed Endurance</h3>
-        <p>🕒 ${escapeHtml(speed[0].time||'')}</p>
-        <p>📍 ${escapeHtml(speed[0].location||'Location TBC')}</p>
-        <p class="tap-hint">Tap for details →</p>
-      </div>
-    </article>` : '';
+      <h3>Speed Endurance</h3>
+      <div>🕒 ${escapeHtml(speed[0].time||'')}</div>
+      <div>📍 ${escapeHtml(speed[0].location||'Location TBC')}</div>
+      <div class="tap-hint">Tap for details →</div>
+    </div>` : '';
 
   const steadyCard=steady.length ? `
-    <article class="session card clickable-session"
+    <div class="next-meta clickable-session"
       onclick="openSteadyDetails('${date}')">
-      <div class="session-main">
-        <h3>Steady 5 Miler</h3>
-        <p>🕒 ${escapeHtml(steady[0].time||'')}</p>
-        <p>📍 ${escapeHtml(steady[0].location||'Location TBC')}</p>
-        <p class="tap-hint">Tap for details →</p>
-      </div>
-    </article>` : '';
+      <h3>Steady 5 Miler</h3>
+      <div>🕒 ${escapeHtml(steady[0].time||'')}</div>
+      <div>📍 ${escapeHtml(steady[0].location||'Location TBC')}</div>
+      <div class="tap-hint">Tap for details →</div>
+    </div>` : '';
 
   const otherCards=other.map(s=>{
     const map='https://www.google.com/maps/search/?api=1&query='+
       encodeURIComponent((s.location||'')+' Stevenage');
 
     return `
-      <article class="session card">
-        <div class="session-main">
-          <h3>${escapeHtml(s.title||s.session||'Training session')}</h3>
-          <p>🕒 ${escapeHtml(s.time||'')}</p>
-          <p>📍 <a href="${map}" target="_blank" rel="noopener">${escapeHtml(s.location||'Location')} ↗</a></p>
-          ${s.leader?`<p>👤 ${escapeHtml(s.leader)}</p>`:''}
-        </div>
-      </article>`;
-  }).join('');
+      <div class="next-meta">
+        <h3>${escapeHtml(s.title||s.session||'Training session')}</h3>
+        <div>🕒 ${escapeHtml(s.time||'')}</div>
+        <div>📍 <a href="${map}" target="_blank" rel="noopener">${escapeHtml(s.location||'Location')} ↗</a></div>
+        ${s.leader?`<div>👤 ${escapeHtml(s.leader)}</div>`:''}
+      </div>`;
+  }).join('<div style="height:12px"></div>');
 
   el.innerHTML=`
     <div class="next-date">${dateLabel}</div>
@@ -374,7 +368,6 @@ function renderNextSession(){
       View full training schedule →
     </a>`;
 }
-
 function openSpeedDetails(date){
   const rows=sessions.filter(x=>x.date===date && /speed endurance/i.test(x.title));
   if(!rows.length) return;
