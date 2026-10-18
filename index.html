@@ -300,21 +300,79 @@ function formatDate(d) {
 function renderNextSession(){
   const el=document.getElementById('next-training');
   if(!el || !Array.isArray(sessions) || !sessions.length) return;
-  const now=new Date(); now.setHours(0,0,0,0);
+
+  const now=new Date();
+  now.setHours(0,0,0,0);
+
   const future=sessions.filter(s=>{
     const d=new Date(s.date+'T00:00:00');
     return !isNaN(d) && d>=now;
   }).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
-  if(!future.length){el.innerHTML='<b>No upcoming training sessions found.</b>';return;}
+
+  if(!future.length){
+    el.innerHTML='<b>No upcoming training sessions found.</b>';
+    return;
+  }
+
   const date=future[0].date;
   const same=future.filter(s=>s.date===date);
   const d=new Date(date+'T00:00:00');
-  const dateLabel=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
-  const items=same.slice(0,3).map(s=>{
-  const map='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((s.location||'')+' Stevenage');
-  return `<div class="next-meta"><div>🕒 ${escapeHtml(s.time||'')} — <b>${escapeHtml(s.title||s.session||'Training session')}</b></div><div>📍 <a href="${map}" target="_blank" rel="noopener">${escapeHtml(s.location||'Location')} ↗</a></div>${s.leader?`<div>👤 ${escapeHtml(s.leader)}</div>`:''}</div>`;
-}).join('<div style="height:12px"></div>');
-  el.innerHTML=`<div class="next-date">${dateLabel}</div>${same.length===1?`<h3>${escapeHtml(same[0].title||same[0].session||'Training session')}</h3>`:`<h3>${same.length} training sessions</h3>`}${items}<a class="next-link" href="#" onclick="showTab('training');return false;">View full training schedule →</a>`;
+  const dateLabel=d.toLocaleDateString('en-GB',{
+    weekday:'long',day:'numeric',month:'long'
+  });
+
+  const speed=same.filter(s=>/speed endurance/i.test(s.title));
+  const steady=same.filter(s=>/steady 5 miler/i.test(s.title));
+  const other=same.filter(s=>
+    !/speed endurance/i.test(s.title) &&
+    !/steady 5 miler/i.test(s.title)
+  );
+
+  const speedCard=speed.length ? `
+    <article class="session card clickable-session"
+      onclick="openSpeedDetails('${date}')">
+      <div class="session-main">
+        <h3>Speed Endurance</h3>
+        <p>🕒 ${escapeHtml(speed[0].time||'')}</p>
+        <p>📍 ${escapeHtml(speed[0].location||'Location TBC')}</p>
+        <p class="tap-hint">Tap for details →</p>
+      </div>
+    </article>` : '';
+
+  const steadyCard=steady.length ? `
+    <article class="session card clickable-session"
+      onclick="openSteadyDetails('${date}')">
+      <div class="session-main">
+        <h3>Steady 5 Miler</h3>
+        <p>🕒 ${escapeHtml(steady[0].time||'')}</p>
+        <p>📍 ${escapeHtml(steady[0].location||'Location TBC')}</p>
+        <p class="tap-hint">Tap for details →</p>
+      </div>
+    </article>` : '';
+
+  const otherCards=other.map(s=>{
+    const map='https://www.google.com/maps/search/?api=1&query='+
+      encodeURIComponent((s.location||'')+' Stevenage');
+
+    return `
+      <article class="session card">
+        <div class="session-main">
+          <h3>${escapeHtml(s.title||s.session||'Training session')}</h3>
+          <p>🕒 ${escapeHtml(s.time||'')}</p>
+          <p>📍 <a href="${map}" target="_blank" rel="noopener">${escapeHtml(s.location||'Location')} ↗</a></p>
+          ${s.leader?`<p>👤 ${escapeHtml(s.leader)}</p>`:''}
+        </div>
+      </article>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div class="next-date">${dateLabel}</div>
+    ${speedCard}
+    ${steadyCard}
+    ${otherCards}
+    <a class="next-link" href="#" onclick="showTab('training');return false;">
+      View full training schedule →
+    </a>`;
 }
 
 function openSpeedDetails(date){
