@@ -396,8 +396,10 @@ function renderAppNews(items){const el=document.getElementById('app-news-feed');
 function formatNewsDate(v){if(!v)return 'CLUB UPDATE';const d=new Date(v);return isNaN(d)?String(v).toUpperCase():d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}).toUpperCase();}
 function openAdmin(){document.getElementById('admin-modal').classList.add('show');document.getElementById('admin-password').value='';document.getElementById('admin-login-status').textContent='';document.getElementById('admin-login-view').style.display='block';document.getElementById('admin-editor-view').style.display='none';}
 function closeAdmin(){document.getElementById('admin-modal').classList.remove('show');}
-function adminLogin(){if(document.getElementById('admin-password').value!==ADMIN_PASSWORD){document.getElementById('admin-login-status').textContent='Incorrect password.';return;}document.getElementById('admin-login-view').style.display='none';document.getElementById('admin-editor-view').style.display='block';document.getElementById('admin-date').value=new Date().toISOString().slice(0,10);document.getElementById('admin-publish-status').textContent='';renderAdminRecent();}
-
+function adminLogin(){
+  document.getElementById('admin-login-status').textContent='Admin access is currently disabled.';
+  return;
+}
 function renderAdminRecent(){
   const el = document.getElementById('admin-recent');
   const items = (window._appNews || []).slice(0, 5);
